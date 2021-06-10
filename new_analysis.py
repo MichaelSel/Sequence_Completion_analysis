@@ -250,7 +250,7 @@ for s in all_subjects: #every subject in the cohort
         s['analyzed']['binom'] = binom_test(s['analyzed']['hits']+s['analyzed']['CRs'],s['analyzed']['trials_total'],0.5)
 
 
-        if(s['analyzed']['binom']>=0.05): s['excluded']=True
+        # if(s['analyzed']['binom']>=0.05): s['excluded']=True
 
 
 

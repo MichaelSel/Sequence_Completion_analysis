@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 from stat_funcs import *
+import matplotlib as plt
 
 data_dir = './analyzed/'
 
@@ -66,3 +67,5 @@ plt.show()
 delta_paired(data_completion_AC['diatonic_d-prime'], data_completion_AC['chromatic_d-prime'], 10000)
 delta_paired(data_completion_AC_Musicians['diatonic_d-prime'], data_completion_AC_Musicians['chromatic_d-prime'], 10000)
 delta_paired(data_completion_AC_NonMusicians['diatonic_d-prime'], data_completion_AC_NonMusicians['chromatic_d-prime'], 10000)
+
+

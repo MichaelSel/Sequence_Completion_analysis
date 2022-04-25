@@ -5,9 +5,9 @@ import json
 def run():
     data_dir = './data'
     processed_dir = './processed'
-    subjects = [{'id': x, 'dir': data_dir + "/" + x + "/csv"} for x in os.listdir(data_dir) if x.startswith("Seq")]
+    subjects = [{'id': x, 'dir': data_dir + "/" + x + "/csv"} for x in os.listdir(data_dir) if x.startswith("SeqC")]
     for subject in subjects:
-        files = [f for f in os.listdir(subject['dir']) if os.path.isfile(os.path.join(subject['dir'], f)) and f.startswith("Seq")]
+        files = [f for f in os.listdir(subject['dir']) if os.path.isfile(os.path.join(subject['dir'], f)) and f.startswith("SeqC")]
 
         if(len(files)==0): continue; #If the subject folder is empty, move to the next subject
 

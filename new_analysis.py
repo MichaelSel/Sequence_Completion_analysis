@@ -7,6 +7,8 @@ import reformat_data
 import statistics as stat
 from scipy.stats import norm
 import math
+import pandas as pd
+
 Z = norm.ppf
 
 
@@ -15,11 +17,19 @@ processed_dir = './processed'
 analyzed_dir = './analyzed'
 all_data_path = processed_dir + "/Seq_comp_all_subjects.json"
 responses_excluded=0
+survey_data = pd.read_csv('./survey/Sequence_Completion_Apr_2022.csv')
 
 all_sets = []
-no_serious = ['SeqC0009','SeqC0108','SeqC0109','SeqC0111','SeqC0117','SeqC0131','SeqC0138','SeqC0154']
-no_understand = ['SeqC0009','SeqC0108','SeqC0109','SeqC0111','SeqC0131','SeqC0147']
+# no_serious = ['SeqC0009','SeqC0108','SeqC0109','SeqC0111','SeqC0117','SeqC0131','SeqC0138','SeqC0154']
+# no_understand = ['SeqC0009','SeqC0108','SeqC0109','SeqC0111','SeqC0131','SeqC0147']
 
+# H: Store participants who did not pass questionnaire exclusion
+no_understand = survey_data[(survey_data['Q8_1'] == "Strongly Disagree") | (survey_data['Q8_1'] == "Disagree")
+                            | (survey_data['Q8_1'] == "Neither agree or disagree")]
+no_understand = no_understand['sub']
+no_serious = survey_data[(survey_data['Q23'] == "not engaged at all") | (survey_data['Q23'] == "Disagree")
+                         | (survey_data['Q23'] == "Neither agree or disagree")]
+no_serious = no_serious['sub']
 
 def SDT(hits, misses, fas, crs):
         #https://lindeloev.net/calculating-d-in-python-and-php/
@@ -48,6 +58,8 @@ def SDT(hits, misses, fas, crs):
         out['beta'] = math.exp((Z(fa_rate) ** 2 - Z(hit_rate) ** 2) / 2)
         out['c'] = -(Z(hit_rate) + Z(fa_rate)) / 2
         out['Ad'] = norm.cdf(out['d'] / math.sqrt(2))
+        out['hit_rate'] = hit_rate
+        out['fa_rate'] = fa_rate
 
         return (out)
 def get_json(path):
@@ -84,15 +96,12 @@ def make_json(subs):
         print("saved data.")
 
 reformat_data.run()
-
 all_subjects = get_json(all_data_path)
-
-
 
 for s in all_subjects: #every subject in the cohort
         s['excluded']=False
-        if(s['id'] in no_serious): s['excluded']=True
-        if (s['id'] in no_understand): s['excluded'] = True
+        if(s['id'] in list(no_serious)): s['excluded']=True
+        if (s['id'] in list(no_understand)): s['excluded'] = True
         s['analyzed']={
                 'block':[],
         }
@@ -103,6 +112,10 @@ for s in all_subjects: #every subject in the cohort
         #This task doesn't have a practice block
         # #don't run the practice block:
         # block_ids_to_run.remove(0) #practice block is index 0
+
+        # H: Get subject-specific questionnaire data
+        sub_questionnaire = survey_data[survey_data['sub'] == s['id']]
+        musical_training = sub_questionnaire['Q4'].to_numpy()[0]
 
         for block in s['blocks']: #every block for the subject
                 if(block['block'] not in block_ids_to_run): continue #if it's not in the blocks we want, skip it
@@ -153,9 +166,6 @@ for s in all_subjects: #every subject in the cohort
                         elif (Q['trial_type'] == "chromatic"):
                                 data['trials_chromatic'] += 1
 
-
-
-
                         if (Q['trial_type'] == "diatonic"):
                                 if(Q['violated']==False and Q['response']==True): #hit
                                         data['hits']+=1
@@ -199,8 +209,6 @@ for s in all_subjects: #every subject in the cohort
                                         data['confidence_chromatic_correct'].append(Q['response'])
                                         data['confidence_correct'].append(Q['response'])
 
-
-
                 s['analyzed']['block'].append(data)
 
                 #once all the per block data was collected(above), append it to subject totales:
@@ -212,8 +220,6 @@ for s in all_subjects: #every subject in the cohort
                         except:
                                 s['analyzed'][key] = data[key]
 
-
-
         sdt_all = SDT(s['analyzed']['hits'],s['analyzed']['misses'],s['analyzed']['FAs'],s['analyzed']['CRs'])
         s['analyzed']['d-prime'] = sdt_all['d']
         s['analyzed']['beta'] = sdt_all['beta']
@@ -224,6 +230,8 @@ for s in all_subjects: #every subject in the cohort
 
         sdt_diatonic = SDT(
                 s['analyzed']['d_hit'], s['analyzed']['d_miss'], s['analyzed']['d_FA'], s['analyzed']['d_CR'])
+        s['analyzed']['diatonic_hit'] = sdt_diatonic['hit_rate']
+        s['analyzed']['diatonic_fa'] = sdt_diatonic['fa_rate']
         s['analyzed']['diatonic_d-prime'] = sdt_diatonic['d']
         s['analyzed']['diatonic_beta'] = sdt_diatonic['beta']
         s['analyzed']['diatonic_c'] = sdt_diatonic['c']
@@ -235,6 +243,8 @@ for s in all_subjects: #every subject in the cohort
         sdt_chromatic = SDT(
                 s['analyzed']['c_hit'], s['analyzed']['c_miss'], s['analyzed']['c_FA'], s['analyzed']['c_CR'])
         s['analyzed']['chromatic_d-prime'] = sdt_chromatic['d']
+        s['analyzed']['chromatic_hit'] = sdt_diatonic['hit_rate']
+        s['analyzed']['chromatic_fa'] = sdt_diatonic['fa_rate']
         s['analyzed']['chromatic_beta'] = sdt_chromatic['beta']
         s['analyzed']['chromatic_c'] = sdt_chromatic['c']
         s['analyzed']['chromatic_Ad'] = sdt_chromatic['Ad']
@@ -249,26 +259,11 @@ for s in all_subjects: #every subject in the cohort
 
         s['analyzed']['binom'] = binom_test(s['analyzed']['hits']+s['analyzed']['CRs'],s['analyzed']['trials_total'],0.5)
 
+        s['analyzed']['musical_training'] = musical_training
+        #if(s['analyzed']['binom']>=0.05): s['excluded']=True
 
-        if(s['analyzed']['binom']>=0.05): s['excluded']=True
-
-
-
-
-
-
-
-
-
-
-
-
-keys_to_store = ['trials_total','trials_diatonic','trials_chromatic','d-prime','beta','c','Ad','diatonic_d-prime','diatonic_beta','diatonic_c','diatonic_Ad','diatonic_confidence','diatonic_conf_to_mean','diatonic_correct_confidence','diatonic_correct_conf_to_mean','chromatic_d-prime','chromatic_beta','chromatic_c','chromatic_Ad','chromatic_confidence','chromatic_conf_to_mean','chromatic_correct_confidence','chromatic_correct_conf_to_mean','conf_d:c','conf_correct_d:c','binom']
-
-
-
+keys_to_store = ['trials_total','trials_diatonic','trials_chromatic','d-prime','beta','c','Ad','diatonic_d-prime','diatonic_beta','diatonic_c','diatonic_Ad','diatonic_confidence','diatonic_conf_to_mean','diatonic_correct_confidence','diatonic_correct_conf_to_mean','chromatic_d-prime','chromatic_beta','chromatic_c','chromatic_Ad','chromatic_confidence','chromatic_conf_to_mean','chromatic_correct_confidence','chromatic_correct_conf_to_mean','conf_d:c','conf_correct_d:c','binom', 'musical_training']
 make_csv(all_subjects, keys_to_store)
-
 make_json(all_subjects)
 
 

@@ -6,7 +6,6 @@ import formats
 
 from csv_to_pandas import csv_to_pandas
 
-
 plotting_dir = './analyzed'
 
 def change_width(ax, new_value) :
@@ -65,8 +64,6 @@ def bars_contour_v_pitch(partition, data,x,y,name=""):
         except:
             1+1
     plt.show()
-
-
 
 
 format_general = formats.general()

@@ -7,8 +7,8 @@ Also Note: This may take a long time. (hours)
 
 import os
 import pandas as pd
-raw_data_dir = '/Users/omriraccah/Documents/Projects/Music_ScaleAbstraction/Sequence_Completion_analysis/data/'
-qualtrics_path = '/Users/omriraccah/Documents/Projects/Music_ScaleAbstraction/Sequence_Completion_analysis/survey/Sequence_Completion_Apr_2022.csv'
+raw_data_dir = './data/'
+qualtrics_path = './survey/Sequence_Completion_Apr_2022.csv'
 
 def download_data(qualtrics_path,raw_data_dir):
     # Loads the processed qualtrics csv we created in 1_Preprocess_Qualtrics_data.py

@@ -117,7 +117,7 @@ print("Excluded for not taking the task seriously: ",excluded_no_serious)
 females = [s for s in all_subjects if s['qualtrics']['Q2'] == 'Female' and not getattr(s['qualtrics'],'excluded',False)]
 print("Females", len(females))
 
-ages = [int(s['qualtrics']['Q1']) for s in all_subjects if not getattr(s['qualtrics'],'excluded',False)]
+ages = [int(s['qualtrics']['Q1']) for s in all_subjects if not getattr(s['qualtrics'],'excluded',False) and not math.isnan(float(s['qualtrics']['Q1']))]
 ages = [age for age in ages if not math.isnan(age)]
 mean_age = mean(ages)
 print("Mean age: ",mean_age)

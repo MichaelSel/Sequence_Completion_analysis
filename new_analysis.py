@@ -1,8 +1,6 @@
 import json
 import csv
-import scipy.stats
-from scipy.stats import binom_test
-import numpy as np
+from scipy.stats import binomtest as binom_test
 import reformat_data
 import statistics as stat
 from scipy.stats import norm
@@ -30,7 +28,6 @@ no_understand = no_understand['sub']
 no_serious = survey_data[(survey_data['Q23'] == "not engaged at all") | (survey_data['Q23'] == "Disagree")
                          | (survey_data['Q23'] == "Neither agree or disagree")]
 no_serious = no_serious['sub']
-
 def SDT(hits, misses, fas, crs):
         #https://lindeloev.net/calculating-d-in-python-and-php/
         """ returns a dict with d-prime measures given hits, misses, false alarms, and correct rejections"""
@@ -98,6 +95,35 @@ def make_json(subs):
 reformat_data.run()
 all_subjects = get_json(all_data_path)
 
+print("Total subjects: ",len(all_subjects))
+
+excluded_no_understand = 0
+# Excluding subjects
+for s in all_subjects:
+        if(s['qualtrics']['Q8_1'] in ["Strongly Disagree","Disagree","Neither agree or disagree"]):
+                s['excluded']=True
+                excluded_no_understand+=1
+print("Excluded for not understanding the task: ",excluded_no_understand)
+
+excluded_no_serious = 0
+
+for s in all_subjects:
+        if(s['qualtrics']['Q23'] in ["not engaged at all","Disagree","Neither agree or disagree"] and not getattr(s['qualtrics'],'excluded',False)):
+                s['excluded']=True
+                excluded_no_serious+=1
+
+print("Excluded for not taking the task seriously: ",excluded_no_serious)
+
+females = [s for s in all_subjects if s['qualtrics']['Q2'] == 'Female' and not getattr(s['qualtrics'],'excluded',False)]
+print("Females", len(females))
+
+ages = [int(s['qualtrics']['Q1']) for s in all_subjects if not getattr(s['qualtrics'],'excluded',False)]
+ages = [age for age in ages if not math.isnan(age)]
+mean_age = mean(ages)
+print("Mean age: ",mean_age)
+print("Age range: ",min(ages),max(ages))
+
+print("Hello")
 for s in all_subjects: #every subject in the cohort
         s['excluded']=False
         if(s['id'] in list(no_serious)): s['excluded']=True

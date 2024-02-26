@@ -2,9 +2,15 @@ import os
 import re
 import json
 
+import pandas as pd
+
+
 def run():
+
     data_dir = './data'
     processed_dir = './processed'
+    qualtrics_data = pd.read_csv('./survey/Sequence_Completion_Apr_2022.csv')
+
     subjects = [{'id': x, 'dir': data_dir + "/" + x + "/csv"} for x in os.listdir(data_dir) if x.startswith("SeqC")]
     for subject in subjects:
         files = [f for f in os.listdir(subject['dir']) if os.path.isfile(os.path.join(subject['dir'], f)) and f.startswith("SeqC")]
@@ -24,6 +30,10 @@ def run():
         blocks = [];
         for item in subject['blocks']: blocks.insert(item['block'], item);
         subject['blocks'] = blocks
+
+        # store the first of the qualtrics data that correspond to this subject without the index
+        subject['qualtrics'] = qualtrics_data[qualtrics_data['sub'] == subject['id']].iloc[0].to_dict()
+
 
         for results_json in subject["blocks"]:
             json_file = open(results_json['dir'])
